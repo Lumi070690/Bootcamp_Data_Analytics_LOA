@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Simulador de Accesibilidad</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body style="font-family: Arial; margin: 40px;">
+
+<h2>Simulador de Accesibilidad a la Vivienda</h2>
+
+<label>Selecciona barrio:</label>
+<select id="barrio"></select>
+
+<br><br>
+
+<label>Metros cuadrados:</label>
+<input type="number" id="metros" value="70">
+
+<br><br>
+
+<label>Salario anual (€):</label>
+<input type="number" id="salario" value="40000">
+
+<br><br>
+
+<div id="resultados"></div>
+
+<div id="gauge" style="width:600px;height:400px;"></div>
+
+<script>
+
+// =========================
+// DATOS (precio €/m² 2024)
+// =========================
+
+const precios = {
+    "el Raval": 3148.48,
+    "el Barri Gòtic": 4434.83,
+    "la Barceloneta": 4580.25,
+    "Sant Pere, Santa Caterina i la Ribera": 4368.58,
+    "el Fort Pienc": 4253.4,
+    "la Sagrada Família": 4566.29,
+    "la Dreta de l'Eixample": 5888.2,
+    "l'Antiga Esquerra de l'Eixample": 5228.42,
+    "la Nova Esquerra de l'Eixample": 4499.91,
+    "Sant Antoni": 4278.63,
+    "el Poble Sec - AEI Parc Montjuïc": 3912,
+    "la Marina del Prat Vermell - AEI Zona Franca": 2619.19,
+    "la Marina de Port": 2640.59,
+    "la Font de la Guatlla": 3467.24,
+    "Hostafrancs": 3761.8,
+    "la Bordeta": 3329.91,
+    "Sants - Badal": 3490.02,
+    "Sants": 3805.05,
+    "les Corts": 4724.97,
+    "la Maternitat i Sant Ramon": 4218.51,
+    "Pedralbes": 5168.15,
+    "Vallvidrera, el Tibidabo i les Planes": 4594.5,
+    "Sarrià": 5975.88,
+    "les Tres Torres": 5348.25,
+    "Sant Gervasi - la Bonanova": 5281.76,
+    "Sant Gervasi - Galvany": 5160.27,
+    "el Putxet i el Farró": 4630.43,
+    "Vallcarca i els Penitents": 4039.99,
+    "el Coll": 2922.93,
+    "la Salut": 4054.11,
+    "la Vila de Gràcia": 4691.65,
+    "el Camp d'en Grassot i Gràcia Nova": 4304.73,
+    "el Baix Guinardó": 3922.16,
+    "Can Baró": 3116.64,
+    "el Guinardó": 3478.84,
+    "la Font d'en Fargues": 3846.97,
+    "el Carmel": 2532.75,
+    "la Teixonera": 2686.5,
+    "Sant Genís dels Agudells": 2789.63,
+    "Montbau": 2694.14,
+    "la Vall d'Hebron": 3249.62,
+    "la Clota": 3707.21,
+    "Horta": 3464.26,
+    "Vilapicina i la Torre Llobeta": 3171.36,
+    "Porta": 2898.09,
+    "el Turó de la Peira": 2566.78,
+    "Can Peguera": 2267.4,
+    "la Guineueta": 2687.78,
+    "Canyelles": 2413.72,
+    "les Roquetes": 2063.45,
+    "Verdun": 2632.29,
+    "la Prosperitat": 2768.83,
+    "la Trinitat Nova": 2051.96,
+    "Torre Baró": 1174.18,
+    "Ciutat Meridiana": 1688.84,
+    "Vallbona": 1115,
+    "la Trinitat Vella": 2089.56,
+    "Baró de Viver": 1718.19,
+    "el Bon Pastor": 2305.6,
+    "la Sagrera": 3616.37,
+    "el Congrés i els Indians": 2889.76,
+    "Navas": 3523.67,
+    "el Camp de l'Arpa del Clot": 3616.32,
+    "el Clot": 3640.56,
+    "el Parc i la Llacuna del Poblenou": 4405.63,
+    "la Vila Olímpica del Poblenou": 4895.74,
+    "el Poblenou": 4642.29,
+    "Diagonal Mar i el Front Marítim del Poblenou": 5608.8,
+    "el Besòs i el Maresme": 2700.84,
+    "Provençals del Poblenou": 3544.15,
+    "Sant Martí de Provençals": 3020.6,
+    "la Verneda i la Pau": 2785.3
+};
+
+// =========================
+// CARGAR DROPDOWN
+// =========================
+
+const select = document.getElementById("barrio");
+
+Object.keys(precios).forEach(b => {
+    let option = document.createElement("option");
+    option.value = b;
+    option.text = b;
+    select.appendChild(option);
+});
+
+// 🔥 Selección inicial obligatoria
+select.selectedIndex = 0;
+
+
+// =========================
+// FUNCIÓN PRINCIPAL
+// =========================
+
+function actualizar() {
+
+    const barrio = select.value;
+    const metros = parseFloat(document.getElementById("metros").value);
+    const salario = parseFloat(document.getElementById("salario").value);
+
+    const precio_m2 = precios[barrio];
+
+    if (!precio_m2 || metros <= 0 || salario <= 0) return;
+
+    const precio_total = precio_m2 * metros;
+    const entrada = precio_total * 0.30;
+
+    const ahorro_anual = salario * 0.20; // 20% capacidad ahorro realista
+    const años = entrada / ahorro_anual;
+
+    let nivel = "";
+    let color = "";
+
+    if (años <= 5) {
+        nivel = "Accesible";
+        color = "#2ecc71";
+    } else if (años <= 10) {
+        nivel = "Tensión moderada";
+        color = "#f39c12";
+    } else {
+        nivel = "Alta barrera de acceso";
+        color = "#e74c3c";
+    }
+
+    // =========================
+    // RESULTADOS TEXTO
+    // =========================
+
+    document.getElementById("resultados").innerHTML = `
+        <p><strong>Precio por m²:</strong> ${precio_m2.toLocaleString()} €</p>
+        <p><strong>Precio total vivienda:</strong> ${precio_total.toLocaleString()} €</p>
+        <p><strong>Entrada necesaria (30%):</strong> ${entrada.toLocaleString()} €</p>
+        <p><strong>Ahorro anual estimado (20% salario):</strong> ${ahorro_anual.toLocaleString()} €</p>
+        <h3>Años necesarios: ${años.toFixed(2)}</h3>
+        <h4 style="color:${color}">Nivel: ${nivel}</h4>
+    `;
+
+    // =========================
+    // GAUGE
+    // =========================
+
+    const data = [{
+        type: "indicator",
+        mode: "gauge+number",
+        value: años,
+        title: { text: "Años necesarios para ahorrar la entrada" },
+        gauge: {
+            axis: { range: [0, 20] },
+            bar: { color: color },
+            steps: [
+                { range: [0, 5], color: "#2ecc71" },
+                { range: [5, 10], color: "#f39c12" },
+                { range: [10, 20], color: "#e74c3c" }
+            ]
+        }
+    }];
+
+    Plotly.newPlot('gauge', data);
+}
+
+
+// =========================
+// EVENTOS
+// =========================
+
+select.addEventListener("change", actualizar);
+document.getElementById("metros").addEventListener("input", actualizar);
+document.getElementById("salario").addEventListener("input", actualizar);
+
+// Ejecutar al cargar
+actualizar();
+
+</script>
+
+</body>
+</html>
+
+
